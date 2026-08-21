@@ -60,27 +60,29 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                // If old miniature database exists (< 5MB), clear it so Room creates from the comprehensive 100k+ asset database
-                try {
-                    val dbFile = context.getDatabasePath("deutschar.db")
-                    if (dbFile.exists() && dbFile.length() < 5 * 1024 * 1024) {
-                        dbFile.delete()
-                        val shm = context.getDatabasePath("deutschar.db-shm")
-                        val wal = context.getDatabasePath("deutschar.db-wal")
-                        if (shm.exists()) shm.delete()
-                        if (wal.exists()) wal.delete()
-                    }
-                } catch (_: Exception) {}
-
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
+                val appContext = context.applicationContext
+                val builder = Room.databaseBuilder(
+                    appContext,
                     AppDatabase::class.java,
                     "deutschar.db"
                 )
-                    .createFromAsset("databases/deutschar.db")
+
+                val hasAsset = try {
+                    val assetsList = appContext.assets.list("databases")
+                    assetsList != null && assetsList.contains("deutschar.db")
+                } catch (_: Throwable) {
+                    false
+                }
+
+                if (hasAsset) {
+                    builder.createFromAsset("databases/deutschar.db")
+                }
+
+                val instance = builder
                     .addMigrations(MIGRATION_1_2)
                     .fallbackToDestructiveMigration()
                     .build()
+
                 INSTANCE = instance
                 instance
             }

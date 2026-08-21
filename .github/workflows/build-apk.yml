@@ -71,6 +71,16 @@ jobs:
         run: |
           chmod +x ./gradlew
 
+      # 6.1 Prepare Pre-packaged Database Assets
+      - name: Prepare Database Asset
+        run: |
+          if [ ! -f "app/src/main/assets/databases/deutschar.db" ]; then
+            echo "Building offline 230k+ dictionary database..."
+            python3 build_100k_database.py || echo "Warning: Python db script skipped or failed, fallback to runtime seeding."
+          else
+            echo "Pre-packaged database deutschar.db already present."
+          fi
+
       # 7. Run Lint
       - name: Run Lint
         env:
