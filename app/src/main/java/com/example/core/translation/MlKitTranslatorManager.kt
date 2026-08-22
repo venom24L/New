@@ -7,12 +7,15 @@ import com.google.mlkit.nl.translate.TranslateRemoteModel
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.ConcurrentHashMap
 
 open class MlKitTranslatorManager {
 
     private val translators = ConcurrentHashMap<String, Translator>()
+    private val translationMutex = Mutex()
     private val modelManager: RemoteModelManager?
         get() = try { RemoteModelManager.getInstance() } catch (_: Throwable) { null }
 
@@ -106,28 +109,57 @@ open class MlKitTranslatorManager {
         val t = targetLang.lowercase()
         if (s == t || text.isBlank()) return text
 
-        // If direct AR <-> DE is requested, pivot through English
-        if ((s == "de" && t == "ar") || (s == "ar" && t == "de")) {
-            val intermediate = try {
-                translateDirect(text, s, "en")
-            } catch (_: Exception) {
+        return translationMutex.withLock {
+            // If direct AR <-> DE is requested, pivot through English
+            if ((s == "de" && t == "ar") || (s == "ar" && t == "de")) {
+                val intermediate = try {
+                    val translatorDE_EN = getTranslator(s, "en")
+                    val cond = DownloadConditions.Builder().build()
+                    kotlinx.coroutines.withTimeoutOrNull(3000) {
+                        translatorDE_EN.downloadModelIfNeeded(cond).await()
+                    }
+                    val res = kotlinx.coroutines.withTimeoutOrNull(3000) {
+                        translatorDE_EN.translate(text).await()
+                    }
+                    res ?: text
+                } catch (_: Exception) {
+                    text
+                }
+
+                if (intermediate.isNotBlank() && intermediate != text) {
+                    try {
+                        val translatorEN_T = getTranslator("en", t)
+                        val cond = DownloadConditions.Builder().build()
+                        kotlinx.coroutines.withTimeoutOrNull(3000) {
+                            translatorEN_T.downloadModelIfNeeded(cond).await()
+                        }
+                        val res = kotlinx.coroutines.withTimeoutOrNull(3000) {
+                            translatorEN_T.translate(intermediate).await()
+                        }
+                        return@withLock res ?: intermediate
+                    } catch (_: Exception) {
+                        return@withLock intermediate
+                    }
+                }
+            }
+
+            val translator = getTranslator(s, t)
+            val conditions = DownloadConditions.Builder().build()
+            try {
+                kotlinx.coroutines.withTimeoutOrNull(3000) {
+                    translator.downloadModelIfNeeded(conditions).await()
+                }
+            } catch (_: Throwable) {
+                // Model download might still be in progress or offline
+            }
+            try {
+                val res = kotlinx.coroutines.withTimeoutOrNull(3000) {
+                    translator.translate(text).await()
+                }
+                res ?: text
+            } catch (e: Exception) {
                 text
             }
-            return translateDirect(intermediate, "en", t)
-        }
-
-        val translator = getTranslator(s, t)
-        val conditions = DownloadConditions.Builder().build()
-        try {
-            translator.downloadModelIfNeeded(conditions).await()
-        } catch (_: Exception) {
-            // Model download might still be in progress or offline
-        }
-        return try {
-            translator.translate(text).await()
-        } catch (e: Exception) {
-            // If translation still fails (e.g. model not yet ready), return original text or rethrow
-            throw e
         }
     }
 
