@@ -1,7 +1,9 @@
 package com.example.core.database
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class WordRepositoryImpl(
@@ -152,7 +154,7 @@ class WordRepositoryImpl(
                 val word = h.wordId?.let { wordDao.getById(it) }
                 HistoryItemCombined(history = h, word = word)
             }
-        } ?: flow { emit(emptyList()) }
+        }?.flowOn(Dispatchers.IO) ?: flow { emit(emptyList()) }
     }
 
     override suspend fun recordHistory(

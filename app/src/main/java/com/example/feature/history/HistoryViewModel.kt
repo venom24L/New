@@ -58,8 +58,8 @@ class HistoryViewModel(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = HistoryUiState(isLoading = true)
+        started = SharingStarted.Eagerly,
+        initialValue = HistoryUiState(isLoading = false)
     )
 
     fun onSearchQueryChange(query: String) {

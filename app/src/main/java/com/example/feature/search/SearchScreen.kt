@@ -186,6 +186,13 @@ fun SearchScreen(
     val settingsState by settingsViewModel.uiState.collectAsState()
     val currentLang = settingsState.appLanguage
 
+    val historyViewModel: HistoryViewModel = viewModel(
+        factory = HistoryViewModel.Factory(
+            wordRepository = com.example.DeutschArApp.instance.wordRepository
+        )
+    )
+    val historyState by historyViewModel.uiState.collectAsState()
+
     Scaffold(
         containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -282,12 +289,6 @@ fun SearchScreen(
                 }
 
                 "history" -> {
-                    val historyViewModel: HistoryViewModel = viewModel(
-                        factory = HistoryViewModel.Factory(
-                            wordRepository = com.example.DeutschArApp.instance.wordRepository
-                        )
-                    )
-                    val historyState by historyViewModel.uiState.collectAsState()
                     HistoryScreen(
                         uiState = historyState,
                         lang = currentLang,

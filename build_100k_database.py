@@ -110,12 +110,12 @@ def main():
         `result_type` TEXT NOT NULL,
         `result_text` TEXT NOT NULL,
         `is_saved` INTEGER NOT NULL,
-        `searched_at` INTEGER NOT NULL,
-        FOREIGN KEY(`word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
+        `searched_at` INTEGER NOT NULL
     )""")
     cur.execute("CREATE INDEX IF NOT EXISTS `index_history_searched_at` ON `history` (`searched_at`)")
     cur.execute("CREATE INDEX IF NOT EXISTS `index_history_word_id` ON `history` (`word_id`)")
     cur.execute("CREATE INDEX IF NOT EXISTS `index_history_query` ON `history` (`query`)")
+    cur.execute("CREATE INDEX IF NOT EXISTS `index_history_is_saved` ON `history` (`is_saved`)")
 
     cur.execute("""CREATE TABLE IF NOT EXISTS `cheatsheet_items` (
         `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -134,13 +134,13 @@ def main():
         `person` TEXT NOT NULL,
         `form` TEXT NOT NULL,
         `source` TEXT NOT NULL,
-        FOREIGN KEY(`word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+        FOREIGN KEY(`word_id`) REFERENCES `words`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE 
     )""")
     cur.execute("CREATE INDEX IF NOT EXISTS `index_conjugations_word_id` ON `conjugations` (`word_id`)")
     cur.execute("CREATE INDEX IF NOT EXISTS `index_conjugations_form` ON `conjugations` (`form`)")
 
     cur.execute("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
-    cur.execute("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7ceea1d5c8fe8fbd395db8641dcc5701')")
+    cur.execute("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4ab1aa00df3130f17bcdc60ecbd003d0')")
 
     conn.commit()
 

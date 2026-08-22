@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CheatSheetEntity::class,
         ConjugationEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -58,6 +58,38 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Recreate history table without foreign key constraint and with new index
+                try {
+                    db.execSQL("""
+                        CREATE TABLE IF NOT EXISTS `history_new` (
+                            `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                            `word_id` INTEGER,
+                            `query` TEXT NOT NULL,
+                            `source_language` TEXT NOT NULL,
+                            `target_language` TEXT NOT NULL,
+                            `result_type` TEXT NOT NULL,
+                            `result_text` TEXT NOT NULL,
+                            `is_saved` INTEGER NOT NULL,
+                            `searched_at` INTEGER NOT NULL
+                        )
+                    """)
+                    db.execSQL("""
+                        INSERT OR IGNORE INTO `history_new` 
+                        SELECT `id`, `word_id`, `query`, `source_language`, `target_language`, `result_type`, `result_text`, `is_saved`, `searched_at` 
+                        FROM `history`
+                    """)
+                    db.execSQL("DROP TABLE IF EXISTS `history`")
+                    db.execSQL("ALTER TABLE `history_new` RENAME TO `history`")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_history_searched_at` ON `history` (`searched_at`)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_history_word_id` ON `history` (`word_id`)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_history_query` ON `history` (`query`)")
+                    db.execSQL("CREATE INDEX IF NOT EXISTS `index_history_is_saved` ON `history` (`is_saved`)")
+                } catch (_: Exception) {}
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val appContext = context.applicationContext
@@ -79,7 +111,7 @@ abstract class AppDatabase : RoomDatabase() {
                 }
 
                 val instance = builder
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .fallbackToDestructiveMigration()
                     .build()
 
