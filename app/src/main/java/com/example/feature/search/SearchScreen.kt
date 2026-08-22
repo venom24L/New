@@ -296,7 +296,12 @@ fun SearchScreen(
                         onToggleSavedOnlyFilter = { historyViewModel.toggleSavedOnlyFilter() },
                         onToggleSaved = { historyViewModel.toggleSaved(it) },
                         onDeleteItem = { historyViewModel.deleteHistoryItem(it) },
-                        onClearAll = { historyViewModel.clearAllHistory() }
+                        onClearAll = { historyViewModel.clearAllHistory() },
+                        onItemClick = { query ->
+                            viewModel.setSelectedTab("dictionary")
+                            viewModel.onQueryChanged(query)
+                            viewModel.performSearch(query)
+                        }
                     )
                 }
 
@@ -450,6 +455,24 @@ fun DictionaryMainContent(
                     onToggleFavorite = onToggleFavorite,
                     onCopy = onCopyText
                 )
+
+                // Translation Context Tip
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = PrimaryAccent.copy(alpha = 0.08f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryAccent.copy(alpha = 0.25f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = AppStrings.translationContextTip(settingsState.appLanguage),
+                        fontFamily = if (settingsState.appLanguage == AppLanguage.ARABIC) CairoFontFamily else OutfitFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PrimaryAccent,
+                        lineHeight = 20.sp,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+                    )
+                }
             }
 
             is SearchResultState.Error -> {
@@ -582,6 +605,31 @@ fun DictionaryEmptyState(
                 textAlign = TextAlign.Center,
                 lineHeight = 22.sp
             )
+
+            // Context Tip Note Card
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = PrimaryAccent.copy(alpha = 0.08f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryAccent.copy(alpha = 0.25f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = AppStrings.translationContextTip(lang),
+                        fontFamily = if (lang == AppLanguage.ARABIC) CairoFontFamily else OutfitFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PrimaryAccent,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
         }
     }
 }

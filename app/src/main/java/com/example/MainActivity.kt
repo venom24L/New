@@ -21,20 +21,32 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
 
-        // Seamless, subtle fade-out transition with zero white flashing or artificial delay
-        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
-            val fadeOut = ObjectAnimator.ofFloat(
-                splashScreenViewProvider.view,
-                View.ALPHA,
-                1f,
-                0f
-            ).apply {
-                interpolator = AccelerateDecelerateInterpolator()
-                duration = 200L
-                doOnEnd { splashScreenViewProvider.remove() }
+        // Safe splash screen exit animation
+        try {
+            splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
+                try {
+                    val fadeOut = ObjectAnimator.ofFloat(
+                        splashScreenViewProvider.view,
+                        View.ALPHA,
+                        1f,
+                        0f
+                    ).apply {
+                        interpolator = AccelerateDecelerateInterpolator()
+                        duration = 200L
+                        doOnEnd { 
+                            try {
+                                splashScreenViewProvider.remove()
+                            } catch (_: Exception) {}
+                        }
+                    }
+                    fadeOut.start()
+                } catch (_: Exception) {
+                    try {
+                        splashScreenViewProvider.remove()
+                    } catch (_: Exception) {}
+                }
             }
-            fadeOut.start()
-        }
+        } catch (_: Exception) {}
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

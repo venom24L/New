@@ -90,6 +90,7 @@ fun HistoryScreen(
     onToggleSaved: (HistoryItemCombined) -> Unit,
     onDeleteItem: (HistoryItemCombined) -> Unit,
     onClearAll: () -> Unit,
+    onItemClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showConfirmClearDialog by remember { mutableStateOf(false) }
@@ -404,6 +405,7 @@ fun HistoryScreen(
                     HistoryCard(
                         item = item,
                         lang = lang,
+                        onItemClick = onItemClick?.let { { it(item.history.query) } },
                         onToggleSaved = { onToggleSaved(item) },
                         onDelete = { onDeleteItem(item) }
                     )
@@ -417,6 +419,7 @@ fun HistoryScreen(
 private fun HistoryCard(
     item: HistoryItemCombined,
     lang: AppLanguage,
+    onItemClick: (() -> Unit)? = null,
     onToggleSaved: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -428,6 +431,11 @@ private fun HistoryCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .then(
+                if (onItemClick != null) {
+                    Modifier.clickable(onClick = onItemClick)
+                } else Modifier
+            )
             .testTag("history_item_${item.history.id}"),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = DarkCardBg),

@@ -114,6 +114,11 @@ object AppStrings {
         AppLanguage.ENGLISH -> "Type any German, Arabic, or English word, verb, or sentence above and tap search for instant translation and grammar analysis."
     }
 
+    fun translationContextTip(lang: AppLanguage): String = when (lang) {
+        AppLanguage.ARABIC -> "💡 نصيحة: إذا كانت الترجمة غير دقيقة أو غامضة، جرّب إضافة سياق أو كتابة الكلمة داخل جملة لمساعدة المترجم الذكي على إعطاء أدق معنى."
+        AppLanguage.ENGLISH -> "💡 Tip: If a translation seems unclear or imprecise, try adding context or typing a complete sentence to help the offline AI engine give the most accurate meaning."
+    }
+
     fun noResultsTitle(lang: AppLanguage): String = when (lang) {
         AppLanguage.ARABIC -> "لم يتم العثور على نتائج"
         AppLanguage.ENGLISH -> "No results found"

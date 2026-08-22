@@ -13,18 +13,11 @@ enum class HistoryResultType {
 
 @Entity(
     tableName = "history",
-    foreignKeys = [
-        ForeignKey(
-            entity = WordEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["word_id"],
-            onDelete = ForeignKey.SET_NULL
-        )
-    ],
     indices = [
         Index(value = ["searched_at"]),
         Index(value = ["word_id"]),
-        Index(value = ["query"])
+        Index(value = ["query"]),
+        Index(value = ["is_saved"])
     ]
 )
 data class HistoryEntity(
